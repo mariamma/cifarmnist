@@ -109,11 +109,14 @@ def visualize_loader_by_class(dl, ax=None, size=8, normalize=True, scale_each=Fa
     if reshape: xb = xb.reshape(len(xb), *reshape)
 
     classes = list(set(list(yb.numpy())))
+    print(classes)
     fig, axs = plt.subplots(len(classes), 1, figsize=(15, 3*len(classes)))
 
+    print("xb : ", xb.shape)
     for y, ax in zip(classes, axs):
         xb_ = xb[yb==y]
-        ax = visualize_tensors(xb_, size=size, normalize=normalize, scale_each=scale_each, permute=True, ax=ax)
+        print(xb_.shape)
+        ax = visualize_tensors(xb_, size=size, normalize=normalize, scale_each=scale_each, permute=False, ax=ax)
         ax.set_title('Class: {}'.format(y))
 
     return fig
