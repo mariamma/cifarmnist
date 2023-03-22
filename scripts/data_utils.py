@@ -82,15 +82,16 @@ def plot_decision_boundary(dl, model, c1, c2, ax=None, print_info=True):
     ax.scatter(X[:,c1], X[:,c2], c=Y, cmap='coolwarm', s=12)
 
 def get_binary_datasets(X, Y, y1, y2, image_width=28, use_cnn=False):
-    assert type(X) is np.ndarray and type(Y) is np.ndarray
-    idx0 = (Y==y1).nonzero()[0]
-    idx1 = (Y==y2).nonzero()[0]
-    idx = np.concatenate((idx0, idx1))
-    X_, Y_ = X[idx,:], (Y[idx]==y2).astype(int)
-    P = np.random.permutation(len(X_))
-    X_, Y_ = X_[P,:], Y_[P]
-    if use_cnn: X_ = X_.reshape(X.shape[0], -1, image_width)[:, None, :, :]
-    return X_[P,:], Y_[P]
+    # assert type(X) is np.ndarray and type(Y) is np.ndarray
+    # idx0 = (Y==y1).nonzero()[0]
+    # idx1 = (Y==y2).nonzero()[0]
+    # idx = np.concatenate((idx0, idx1))
+    # X_, Y_ = X[idx,:], (Y[idx]==y2).astype(int)
+    # P = np.random.permutation(len(X_))
+    # X_, Y_ = X_[P,:], Y_[P]
+    # if use_cnn: X_ = X_.reshape(X.shape[0], -1, image_width)[:, None, :, :]
+    # return X_[P,:], Y_[P]
+    return X, Y
 
 def get_binary_loader(dl, y1, y2):
     X, Y = utils.extract_numpy_from_loader(dl)
@@ -109,16 +110,19 @@ def get_mnist(fpath=DOWNLOAD_DIR, flatten=False, binarize=False, normalize=True,
     to_tensor = torchvision.transforms.ToTensor()
     to_flat = torchvision.transforms.Lambda(lambda X: X.reshape(-1).squeeze())
     to_norm = torchvision.transforms.Normalize((0.5, ), (0.5, ))
-    to_binary = torchvision.transforms.Lambda(lambda y: 0 if y in y0 else 1)
+    # to_binary = torchvision.transforms.Lambda(lambda y: 0 if y in y0 else 1)
 
     transforms = [to_tensor]
     if normalize: transforms.append(to_norm)
     if flatten: transforms.append(to_flat)
     tf = torchvision.transforms.Compose(transforms)
-    ttf = to_binary if binarize else None
+    # ttf = to_binary if binarize else None
 
-    X_tr = torchvision.datasets.MNIST(fpath, download=True, transform=tf, target_transform=ttf)
-    X_te = torchvision.datasets.MNIST(fpath, download=True, train=False, transform=tf, target_transform=ttf)
+    # X_tr = torchvision.datasets.MNIST(fpath, download=True, transform=tf, target_transform=ttf)
+    # X_te = torchvision.datasets.MNIST(fpath, download=True, train=False, transform=tf, target_transform=ttf)
+
+    X_tr = torchvision.datasets.MNIST(fpath, download=True, transform=tf)
+    X_te = torchvision.datasets.MNIST(fpath, download=True, train=False, transform=tf)
 
     return _to_torch(X_tr), _to_torch(X_te)
 
@@ -167,13 +171,16 @@ def get_cifar(fpath=DOWNLOAD_DIR, use_cifar10=False, flatten_data=False, transfo
         tr_transforms = torchvision.transforms.Compose(tr_transforms)
         te_transforms = torchvision.transforms.Compose(te_transforms)
 
-    to_binary = torchvision.transforms.Lambda(lambda y: 0 if y in y0 else 1)
-    target_transforms = to_binary if binarize else None
+    # to_binary = torchvision.transforms.Lambda(lambda y: 0 if y in y0 else 1)
+    # target_transforms = to_binary if binarize else None
     dset = 'cifar10' if use_cifar10 else 'cifar100'
     func = torchvision.datasets.CIFAR10 if use_cifar10 else torchvision.datasets.CIFAR100
 
-    X_tr = func(fpath, download=True, transform=tr_transforms, target_transform=target_transforms)
-    X_te = func(fpath, download=True, train=False, transform=te_transforms, target_transform=target_transforms)
+    # X_tr = func(fpath, download=True, transform=tr_transforms, target_transform=target_transforms)
+    # X_te = func(fpath, download=True, train=False, transform=te_transforms, target_transform=target_transforms)
+
+    X_tr = func(fpath, download=True, transform=tr_transforms)
+    X_te = func(fpath, download=True, train=False, transform=te_transforms)
 
     return X_tr, X_te
 
