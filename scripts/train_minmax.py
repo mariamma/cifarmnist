@@ -1,4 +1,4 @@
-import torch, os, torchvision
+import torch, os
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -12,8 +12,6 @@ import math
 from logger_utils import Logger
 import mnistcifar_utils as mc_utils
 from tqdm import trange, tqdm
-import cv2
-from torchvision.utils import save_image
 
 
 WEIGHTS_DIR = '/scratch/mariamma/cifar_mnist/minmax-mtl/weights'
@@ -26,16 +24,16 @@ def fit_model(model_name: str, run: str=None, epochs: int=50, fold: int=0):
     run_str = "" if run is None or run == "" else f"_{run}"
     num_classes = 10
 
-    checkpoints_dir = f"{WEIGHTS_DIR}/resnet34_mtl_bce2/cifar10_mnist1"
-    tensorboard_dir = f"{RESULTS_DIR}/tensorboard/resnet34_mtl_bce2/cifar10_mnist1"
+    checkpoints_dir = f"{WEIGHTS_DIR}/resnet34_minmax_ce1/cifar10_mnist10"
+    tensorboard_dir = f"{RESULTS_DIR}/tensorboard/resnet34_minmax_ce1/cifar10_mnist10"
     os.makedirs(checkpoints_dir, exist_ok=True)
     os.makedirs(tensorboard_dir, exist_ok=True)
 
     logger = Logger(tensorboard_dir)
     
     model = resnet34(pretrained=True, num_classes=num_classes).to(device)
-    multilabel_criterion = nn.BCEWithLogitsLoss(reduction = 'none')
-    #multilabel_criterion = nn.CrossEntropyLoss(reduction = 'none')
+    # multilabel_criterion = nn.BCEWithLogitsLoss(reduction = 'none')
+    multilabel_criterion = nn.CrossEntropyLoss(reduction = 'none')
     optimizer = optim.SGD(model.parameters(), lr=0.05)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=4, verbose=True, factor=0.2
@@ -66,10 +64,6 @@ def fit_model(model_name: str, run: str=None, epochs: int=50, fold: int=0):
             data, targets_raw = next(train_dataset)
             targets = F.one_hot(targets_raw, num_classes=10)
             # data, targets = data.to(device), [elt.to(device) for elt in targets]
-            rgb_img = data[0]
-            save_image(rgb_img, 'orig1.jpg')
-            print("image written")
-
             data, targets = data.to(device), targets.to(device)
             
             # Forward pass
@@ -85,7 +79,7 @@ def fit_model(model_name: str, run: str=None, epochs: int=50, fold: int=0):
             class_losses = torch.mean(total_loss, 0)
             # print("Class loss : ", class_losses)
 
-            loss = torch.mean(total_loss)
+            loss = torch.max(total_loss)
             loss_classmean = torch.mean(class_losses)
             # print("Loss = ", loss, " Class loss = ", loss_classmean)
 
@@ -132,6 +126,7 @@ def fit_model(model_name: str, run: str=None, epochs: int=50, fold: int=0):
                 # print("Class loss : ", class_losses.shape)
 
                 val_loss = torch.mean(total_loss)
+                # val_loss = torch.max(total_loss)
                 # print("Loss = ", val_loss, " Class loss = ", class_losses)
                 eval_loss.append(val_loss.cpu())
             
@@ -161,7 +156,7 @@ def fit_model(model_name: str, run: str=None, epochs: int=50, fold: int=0):
 def main():
     model_name = 'resnet34'
     run = 1
-    epochs = 400
+    epochs = 500
     fit_model(model_name, run, epochs)
 
 
